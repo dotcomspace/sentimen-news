@@ -8,17 +8,11 @@ use App\Models\HistoryAnalisis;
 
 class SentimenController extends Controller
 {
-    /**
-     * Tampilkan halaman utama
-     */
     public function index()
     {
         return view('app');
     }
 
-    /**
-     * API: Analisis sentimen — kirim ke HuggingFace
-     */
     public function analyze(Request $request)
     {
         $request->validate([
@@ -26,11 +20,15 @@ class SentimenController extends Controller
             'judul'         => 'nullable|string|max:255',
         ]);
 
-        $aiUrl = rtrim(env('AI_API_URL', 'https://abdcharis-sentimen-analisis-api.hf.space'), '/');
+        $aiUrl = rtrim(env('AI_API_URL', 'http://localhost:8001'), '/');
 
         try {
-            $aiResponse = Http::timeout(60)
-                ->retry(2, 3000)   // retry 2x dengan jeda 3 detik (antisipasi cold start HF)
+            $aiResponse = Http::withHeaders([
+                    'ngrok-skip-browser-warning' => 'true',
+                    'Content-Type'               => 'application/json',
+                ])
+                ->timeout(60)
+                ->retry(2, 3000)
                 ->post("{$aiUrl}/predict", [
                     'teks_berita' => $request->konten_berita,
                 ]);
@@ -38,7 +36,7 @@ class SentimenController extends Controller
             if ($aiResponse->failed()) {
                 return response()->json([
                     'status'  => 'error',
-                    'message' => 'AI Service tidak merespons. Mungkin sedang cold start, coba lagi dalam 30 detik.',
+                    'message' => 'AI Service tidak merespons. Coba lagi dalam 30 detik.',
                     'detail'  => $aiResponse->body(),
                 ], 503);
             }
@@ -47,7 +45,6 @@ class SentimenController extends Controller
             $sentimen        = $aiData['sentimen']         ?? 'Netral';
             $confidenceScore = $aiData['confidence_score'] ?? 0;
 
-            // Simpan ke database
             HistoryAnalisis::create([
                 'judul_berita'     => $request->judul ?? 'Tanpa Judul',
                 'konten'           => $request->konten_berita,
@@ -68,7 +65,7 @@ class SentimenController extends Controller
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Tidak dapat terhubung ke AI Service. HuggingFace Spaces mungkin sedang sleep, coba lagi dalam 30 detik.',
+                'message' => 'Tidak dapat terhubung ke AI Service. Pastikan server ngrok sedang aktif.',
             ], 503);
         } catch (\Exception $e) {
             return response()->json([
@@ -78,18 +75,12 @@ class SentimenController extends Controller
         }
     }
 
-    /**
-     * API: Ambil riwayat dari database
-     */
     public function historyApi()
     {
         $data = HistoryAnalisis::latest()->take(50)->get();
         return response()->json(['status' => 'success', 'data' => $data]);
     }
 
-    /**
-     * API: Statistik dashboard dari database
-     */
     public function stats()
     {
         $total   = HistoryAnalisis::count();
@@ -103,56 +94,40 @@ class SentimenController extends Controller
         ]);
     }
 
-    /**
-     * API: Ambil berita dari RSS
-     */
     public function news()
     {
-        $feeds = [
+        $feeds    = [
             'https://www.cnbcindonesia.com/rss',
             'https://www.cnnindonesia.com/ekonomi/rss',
         ];
-
         $articles = [];
 
         foreach ($feeds as $feed) {
             try {
                 $response = Http::timeout(10)->get($feed);
                 if ($response->failed()) continue;
-
                 $xml = simplexml_load_string($response->body());
                 if (!$xml) continue;
-
                 $items = $xml->channel->item ?? [];
                 foreach (array_slice((array)$items, 0, 4) as $item) {
                     if (!is_object($item)) continue;
                     $title   = (string)($item->title   ?? '');
                     $link    = (string)($item->link    ?? '#');
                     $pubDate = (string)($item->pubDate ?? '');
-
                     if (empty($title)) continue;
-
-                    $source  = str_contains($feed, 'cnbc') ? 'CNBC Indonesia' : 'CNN Indonesia';
-                    $timeAgo = $pubDate ? $this->timeAgo($pubDate) : 'Baru saja';
-
                     $articles[] = [
                         'id'     => count($articles) + 1,
                         'title'  => $title,
-                        'source' => $source,
-                        'time'   => $timeAgo,
+                        'source' => str_contains($feed, 'cnbc') ? 'CNBC Indonesia' : 'CNN Indonesia',
+                        'time'   => $pubDate ? $this->timeAgo($pubDate) : 'Baru saja',
                         'type'   => 'Netral',
                         'url'    => $link,
                     ];
                 }
-            } catch (\Exception $e) {
-                continue;
-            }
+            } catch (\Exception $e) { continue; }
         }
 
-        if (empty($articles)) {
-            $articles = $this->getMockNews();
-        }
-
+        if (empty($articles)) $articles = $this->getMockNews();
         return response()->json(['status' => 'success', 'data' => $articles]);
     }
 
@@ -164,9 +139,7 @@ class SentimenController extends Controller
             elseif ($diff < 86400)  return intval($diff / 3600) . ' jam lalu';
             elseif ($diff < 604800) return intval($diff / 86400) . ' hari lalu';
             else                    return date('d M Y', strtotime($datetime));
-        } catch (\Exception $e) {
-            return 'Baru saja';
-        }
+        } catch (\Exception $e) { return 'Baru saja'; }
     }
 
     private function getMockNews(): array
