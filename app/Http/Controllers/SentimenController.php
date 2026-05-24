@@ -1,0 +1,170 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use App\Models\HistoryAnalisis;
+
+class SentimenController extends Controller
+{
+    // URL AI Service Python — port 8001 (bukan 8000 lagi!)
+    private string $aiUrl = 'http://localhost:8001';
+
+    /**
+     * Tampilkan halaman utama (menggantikan React App)
+     */
+    public function index()
+    {
+        return view('app');
+    }
+
+    /**
+     * API: Analisis sentimen (menggantikan POST /api/v1/analyze di Express)
+     */
+    public function analyze(Request $request)
+    {
+        $request->validate([
+            'konten_berita' => 'required|string|min:10',
+            'judul'         => 'nullable|string|max:255',
+        ]);
+
+        try {
+            // Kirim ke Python FastAPI
+            $aiResponse = Http::timeout(30)->post("{$this->aiUrl}/predict", [
+                'teks_berita' => $request->konten_berita,
+            ]);
+
+            if ($aiResponse->failed()) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Gagal terhubung ke AI Service. Pastikan Python FastAPI berjalan di port 8001.',
+                ], 503);
+            }
+
+            $aiData = $aiResponse->json();
+            $sentimen        = $aiData['sentimen']          ?? 'Netral';
+            $confidenceScore = $aiData['confidence_score']  ?? 0;
+
+            // Simpan ke database
+            HistoryAnalisis::create([
+                'judul_berita'     => $request->judul ?? 'Tanpa Judul',
+                'konten'           => $request->konten_berita,
+                'hasil_sentimen'   => $sentimen,
+                'confidence_score' => $confidenceScore,
+            ]);
+
+            return response()->json([
+                'status'  => 'success',
+                'message' => 'Analisis berhasil diproses dan disimpan',
+                'data'    => [
+                    'judul'    => $request->judul,
+                    'sentimen' => $sentimen,
+                    'akurasi'  => $confidenceScore,
+                ],
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Ambil berita dari RSS (menggantikan GET /api/v1/news di Express)
+     */
+    public function news()
+    {
+        // Daftar RSS feed berita ekonomi Indonesia
+        $feeds = [
+            'https://www.cnbcindonesia.com/rss',
+            'https://www.cnnindonesia.com/ekonomi/rss',
+        ];
+
+        $articles = [];
+
+        foreach ($feeds as $feed) {
+            try {
+                $response = Http::timeout(10)->get($feed);
+                if ($response->failed()) continue;
+
+                // Parse XML sederhana
+                $xml = simplexml_load_string($response->body());
+                if (!$xml) continue;
+
+                $items = $xml->channel->item ?? [];
+                foreach (array_slice((array)$items, 0, 4) as $item) {
+                    if (!is_object($item)) continue;
+                    $title = (string)($item->title ?? '');
+                    $link  = (string)($item->link  ?? '#');
+                    $pubDate = (string)($item->pubDate ?? '');
+
+                    if (empty($title)) continue;
+
+                    // Tentukan source dari URL
+                    $source = str_contains($feed, 'cnbc') ? 'CNBC Indonesia' : 'CNN Indonesia';
+
+                    // Format waktu
+                    $timeAgo = $pubDate ? $this->timeAgo($pubDate) : 'Baru saja';
+
+                    $articles[] = [
+                        'id'     => count($articles) + 1,
+                        'title'  => $title,
+                        'source' => $source,
+                        'time'   => $timeAgo,
+                        'type'   => 'Netral', // default; bisa dikembangkan
+                        'url'    => $link,
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Skip feed yang gagal
+                continue;
+            }
+        }
+
+        // Fallback ke mock news jika semua feed gagal
+        if (empty($articles)) {
+            $articles = $this->getMockNews();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => $articles,
+        ]);
+    }
+
+    /**
+     * Helper: Hitung waktu relatif (misal "3 jam lalu")
+     */
+    private function timeAgo(string $datetime): string
+    {
+        try {
+            $time = strtotime($datetime);
+            $diff = time() - $time;
+
+            if ($diff < 3600)        return intval($diff / 60) . ' menit lalu';
+            elseif ($diff < 86400)   return intval($diff / 3600) . ' jam lalu';
+            elseif ($diff < 604800)  return intval($diff / 86400) . ' hari lalu';
+            else                     return date('d M Y', $time);
+        } catch (\Exception $e) {
+            return 'Baru saja';
+        }
+    }
+
+    /**
+     * Helper: Mock news sebagai fallback
+     */
+    private function getMockNews(): array
+    {
+        return [
+            ['id'=>1,'title'=>'IHSG Menguat Didorong Aliran Modal Asing ke Sektor Perbankan','source'=>'Market Watch','time'=>'1 jam lalu','type'=>'Positif','url'=>'https://news.google.com/search?q=IHSG+menguat&hl=id'],
+            ['id'=>2,'title'=>'Rupiah Melemah ke Level Terendah Tiga Bulan Terakhir','source'=>'Global Finance','time'=>'3 jam lalu','type'=>'Negatif','url'=>'https://news.google.com/search?q=rupiah+melemah&hl=id'],
+            ['id'=>3,'title'=>'Bank Indonesia Pertahankan Suku Bunga Acuan di 6,25%','source'=>'FinTech Journal','time'=>'5 jam lalu','type'=>'Netral','url'=>'https://news.google.com/search?q=BI+suku+bunga&hl=id'],
+            ['id'=>4,'title'=>'Fibonacci 61.8% Tahan Laju Koreksi – Analis Optimistis','source'=>'TradingView','time'=>'12 jam lalu','type'=>'Positif','url'=>'https://news.google.com/search?q=fibonacci+koreksi+saham&hl=id'],
+            ['id'=>5,'title'=>'Krisis Rantai Pasok Kembali Bayangi Prospek Ekspor Global','source'=>'Economic Times','time'=>'1 hari lalu','type'=>'Negatif','url'=>'https://news.google.com/search?q=krisis+rantai+pasok+ekspor&hl=id'],
+            ['id'=>6,'title'=>'Sektor Energi Pimpin Kenaikan Bursa Asia Pagi Ini','source'=>'Investopedia ID','time'=>'1 hari lalu','type'=>'Positif','url'=>'https://news.google.com/search?q=sektor+energi+bursa+asia&hl=id'],
+        ];
+    }
+}

@@ -1,0 +1,7 @@
+%%writefile requirements.txt
+fastapi
+uvicorn
+tensorflow
+numpy
+pydantic
+google-generativeai
