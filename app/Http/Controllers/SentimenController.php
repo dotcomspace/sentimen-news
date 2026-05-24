@@ -26,7 +26,7 @@ class SentimenController extends Controller
             'judul'         => 'nullable|string|max:255',
         ]);
 
-        $aiUrl = rtrim(env('AI_API_URL', 'http://https://abdcharis-sentimen-analisis-api.hf.space'), '/');
+        $aiUrl = rtrim(env('AI_API_URL', 'https://abdcharis-sentimen-analisis-api.hf.space'), '/');
 
         try {
             $aiResponse = Http::timeout(60)
