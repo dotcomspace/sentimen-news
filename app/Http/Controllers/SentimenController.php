@@ -23,15 +23,11 @@ class SentimenController extends Controller
         $aiUrl = rtrim(env('AI_API_URL', 'http://localhost:8001'), '/');
 
         try {
-            $aiResponse = Http::withHeaders([
-                    'ngrok-skip-browser-warning' => 'true',
-                    'Content-Type'               => 'application/json',
-                ])
-                ->timeout(60)
-                ->retry(2, 3000)
-                ->post("{$aiUrl}/predict", [
-                    'teks_berita' => $request->konten_berita,
-                ]);
+            $aiResponse = Http::timeout(60)
+    ->retry(2, 3000)
+    ->post("{$aiUrl}/predict", [
+        'teks_berita' => $request->konten_berita,
+    ]);
 
             if ($aiResponse->failed()) {
                 return response()->json([
