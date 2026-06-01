@@ -20,7 +20,6 @@
   --radius:14px;--radius-sm:8px;
 }
 
-/* ── Light Mode Override ── */
 body.light-mode {
   --bg: #f8fafc; --surface: #ffffff; --surface2: #f1f5f9;
   --border: rgba(0,0,0,0.1); --border-hi: rgba(0,0,0,0.2);
@@ -48,7 +47,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
 
 /* --- SIDEBAR DESKTOP --- */
 .sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s, border-color 0.3s; z-index: 100;}
-.sidebar.collapsed {margin-left: -260px;} 
+.sidebar.collapsed {margin-left: -260px;}
 
 /* --- SIDEBAR TOP (Menu Dalam) --- */
 .sidebar-top { display: flex; align-items: center; padding: 16px 20px; height: 76px; gap: 8px; margin-bottom: 8px; }
@@ -73,7 +72,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
 /* --- HEADER DESKTOP (Menu Luar) --- */
 .desktop-header { display: flex; align-items: center; padding: 16px 20px; height: 76px; position: relative; z-index: 10; }
 .desktop-header .desktop-nav-toggle { opacity: 0; pointer-events: none; transition: opacity 0.3s; margin-left: -6px;}
-/* Ketika sidebar collpase, munculkan tombol luar */
+/* Ketika sidebar collapse, munculkan tombol luar */
 .sidebar.collapsed ~ .main .desktop-header .desktop-nav-toggle { opacity: 1; pointer-events: auto; }
 
 .mobile-header { display: none; }
@@ -212,7 +211,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
 .empty-state p{font-size:14px}
 
 /* ═══════════════════════════════════════
-   RESPONSIVE MOBILE 100% FLUID FIX
+   RESPONSIVE MOBILE
 ═══════════════════════════════════════ */
 @media (max-width: 992px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -240,7 +239,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
   .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100vh; transform: translateX(-100%); margin-left: 0; z-index: 1000; }
   .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.5); }
   .sidebar-top { padding: 24px; height: auto; }
-  .sidebar-top .inside-sidebar { display: none; } /* Sembunyikan toggle dalam karena mobile pake header luar */
+  .sidebar-top .inside-sidebar { display: none; }
   
   .sidebar-overlay { display: block; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 999; }
   .sidebar-overlay.open { opacity: 1; visibility: visible; }
@@ -308,7 +307,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
     </nav>
     <div class="sidebar-footer">
       <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px">v2.5.0</div>
-      <div>Model: FinBERT-ID</div>
+      <div>Model: SentimenAI Model</div>
     </div>
   </aside>
 
@@ -333,6 +332,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       <i id="theme-icon" class="ti ti-sun"></i>
     </button>
 
+    <!-- ══ LANDING PAGE ══ -->
     <div id="page-landing" class="page active">
       <div class="landing-container">
         <div class="landing-emoji">🤖</div>
@@ -347,7 +347,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
           <div class="card feature-card">
             <i class="ti ti-bolt feature-icon"></i>
             <h3 class="feature-title">Real-time AI</h3>
-            <p class="feature-desc">Analisis teks dan berita makroekonomi hanya dalam hitungan detik menggunakan FinBERT.</p>
+            <p class="feature-desc">Analisis teks dan berita makroekonomi hanya dalam hitungan detik menggunakan SentimenAI Model.</p>
           </div>
           <div class="card feature-card">
             <i class="ti ti-chart-pie feature-icon"></i>
@@ -367,15 +367,16 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       </div>
     </div>
 
+    <!-- ══ ANALISIS PAGE ══ -->
     <div id="page-analisis" class="page">
       <div class="page-header">
         <h2>Analisis Sentimen Berita</h2>
-        <p>Tempelkan teks berita secara langsung untuk mendeteksi sentimen dengan FinBERT AI</p>
+        <p>Tempelkan teks berita secara langsung untuk mendeteksi sentimen dengan SentimenAI Model</p>
       </div>
       <div class="card">
         <div style="margin-bottom:12px">
           <label style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:8px">Konten Berita</label>
-          <textarea id="text-analyze-input" class="search-input" rows="7" style="resize:vertical;line-height:1.6" placeholder="Masukkan atau tempel paragraf berita ekonomi di sini..."></textarea>
+          <textarea id="text-analyze-input" class="search-input" rows="7" style="resize:vertical;line-height:1.6" placeholder="Masukkan atau tempel paragraf berita ekonomi di sini... (tekan Ctrl+Enter untuk analisis)"></textarea>
         </div>
         <button class="search-btn" id="btn-analyze-text" onclick="analyzeFreeText()">
           <i class="ti ti-scan"></i> Analisis Sentimen Konten
@@ -384,6 +385,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       <div id="text-result-panel" style="display:none;margin-top:16px"></div>
     </div>
 
+    <!-- ══ TREND PAGE ══ -->
     <div id="page-trend" class="page">
       <div class="page-header">
         <h2>Tren Pasar</h2>
@@ -402,6 +404,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       <div id="trend-list" class="news-list"></div>
     </div>
 
+    <!-- ══ DASHBOARD PAGE ══ -->
     <div id="page-dashboard" class="page">
       <div class="page-header">
         <h2>Dashboard</h2>
@@ -429,6 +432,7 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       </div>
     </div>
 
+    <!-- ══ HISTORY PAGE ══ -->
     <div id="page-history" class="page">
       <div class="page-header">
         <h2>Riwayat</h2>
@@ -446,17 +450,18 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
-// --- FITUR BARU: TOGGLE MENU DESKTOP ---
+// ── TOGGLE SIDEBAR DESKTOP ──
 function toggleDesktopSidebar() {
   document.getElementById('main-sidebar').classList.toggle('collapsed');
 }
 
-// --- TOGGLE MENU MOBILE ---
+// ── TOGGLE SIDEBAR MOBILE ──
 function toggleMobileMenu() {
   document.getElementById('main-sidebar').classList.toggle('open');
   document.querySelector('.sidebar-overlay').classList.toggle('open');
 }
 
+// ── THEME ──
 function initTheme() {
   const savedTheme = localStorage.getItem('theme');
   const icon = document.getElementById('theme-icon');
@@ -465,7 +470,6 @@ function initTheme() {
     icon.classList.replace('ti-sun', 'ti-moon');
   }
 }
-
 function toggleTheme() {
   const body = document.body;
   const icon = document.getElementById('theme-icon');
@@ -478,9 +482,24 @@ function toggleTheme() {
     localStorage.setItem('theme', 'dark');
   }
 }
-
 initTheme();
 
+// ── ENTER KEY SUPPORT (Ctrl+Enter atau Shift+Enter untuk analisis) ──
+// Di textarea, Enter biasa untuk newline, Ctrl+Enter / Shift+Enter untuk submit
+document.addEventListener('DOMContentLoaded', function() {
+  const textarea = document.getElementById('text-analyze-input');
+  if (textarea) {
+    textarea.addEventListener('keydown', function(e) {
+      // Ctrl+Enter ATAU Shift+Enter → trigger analisis
+      if (e.key === 'Enter' && (e.ctrlKey || e.shiftKey)) {
+        e.preventDefault();
+        analyzeFreeText();
+      }
+    });
+  }
+});
+
+// ── DATA ──
 const trendData = [
   {id:1,title:"Bank Indonesia pertahankan suku bunga acuan 6% di tengah ketidakpastian global",source:"Bisnis.com",time:"2 jam lalu",sentiment:"neu",score:0.51,tags:["makro","BI"]},
   {id:2,title:"IHSG ditutup menguat 1,2% didorong aksi beli investor asing pada sektor perbankan",source:"CNBC Indonesia",time:"3 jam lalu",sentiment:"pos",score:0.84,tags:["saham","IHSG"]},
@@ -504,6 +523,7 @@ let analyzedTickers = new Set();
 let negCount = 0;
 let donutChart = null;
 
+// ── NAVIGASI ──
 function goPage(p) {
   document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
@@ -518,6 +538,7 @@ function goPage(p) {
   }
 }
 
+// ── HELPERS ──
 function sentLabel(s) { return s==='pos'?'Positif':s==='neg'?'Negatif':'Netral'; }
 function sentColor(s) { return s==='pos'?'#34d399':s==='neg'?'#f87171':'#94a3b8'; }
 function badgeHTML(s, score) {
@@ -529,10 +550,10 @@ function scoreBarHTML(score, s) {
   return `<div class="score-bar-track"><div class="score-bar-fill" style="width:${Math.round(score*100)}%;background:${sentColor(s)}"></div></div>`;
 }
 
-// FUNGSI ANALISIS DENGAN CSRF TOKEN LARAVEL
+// ── ANALISIS UTAMA ──
 async function analyzeFreeText() {
   const txt = document.getElementById('text-analyze-input').value.trim();
-  if(!txt) return;
+  if (!txt) return;
   const btn = document.getElementById('btn-analyze-text');
   const res = document.getElementById('text-result-panel');
   btn.innerHTML = `<span class="spinner" style="margin-right:6px;vertical-align:middle"></span> Memproses AI...`;
@@ -568,7 +589,7 @@ async function analyzeFreeText() {
       saranHtml = `<div class="alert-box neg" style="margin-top:20px"><div class="alert-icon">⚠️</div><div style="flex:1"><div class="alert-title-neg">Sentimen Negatif Terdeteksi — Rekomendasi Aksi:</div><div class="saran-grid">${saranNegatif.map(sItem => `<div class="saran-item"><i class="ti ${sItem.icon}"></i><span>${sItem.text}</span></div>`).join('')}</div></div></div>`;
     }
 
-    res.innerHTML = `<div class="result-panel"><div class="result-header"><div class="result-ticker" style="font-size:15px">Hasil FinBERT AI</div>${badgeHTML(s)}</div><div class="result-score-row" style="margin-top:12px"><span style="font-size:12px;color:var(--muted);width:100px;flex-shrink:0">Confidence Score</span>${scoreBarHTML(score, s)}<span style="font-size:13px;font-weight:500;color:${sentColor(s)};width:40px;text-align:right">${akurasi}%</span></div>${saranHtml}</div>`;
+    res.innerHTML = `<div class="result-panel"><div class="result-header"><div class="result-ticker" style="font-size:15px">Hasil SentimenAI Model</div>${badgeHTML(s)}</div><div class="result-score-row" style="margin-top:12px"><span style="font-size:12px;color:var(--muted);width:100px;flex-shrink:0">Confidence Score</span>${scoreBarHTML(score, s)}<span style="font-size:13px;font-weight:500;color:${sentColor(s)};width:40px;text-align:right">${akurasi}%</span></div>${saranHtml}</div>`;
     res.style.display = 'block';
   } catch (err) {
     res.innerHTML = `<div class="alert-box neg" style="margin-top:16px"><div class="alert-icon">⚠️</div><div style="flex:1"><div class="alert-title-neg">Gagal Menghubungi Server AI</div><div class="alert-body">Pastikan backend Anda menyala. ${err.message}</div></div></div>`;
@@ -579,6 +600,7 @@ async function analyzeFreeText() {
   }
 }
 
+// ── TREND ──
 function renderTrend() {
   const q = trendSearch.toLowerCase();
   const items = trendData.filter(n => (trendFilter === 'all' || n.sentiment === trendFilter || n.tags.includes(trendFilter)) && (!q || n.title.toLowerCase().includes(q)));
@@ -586,9 +608,15 @@ function renderTrend() {
   if (!items.length) { el.innerHTML = `<div class="empty-state"><p>Tidak ada berita cocok</p></div>`; return; }
   el.innerHTML = items.map(n => `<div class="news-card"><div class="news-card-top"><div class="news-card-title">${n.title}</div>${badgeHTML(n.sentiment, n.score)}</div><div class="news-card-meta"><span class="news-source"><i class="ti ti-news"></i> ${n.source}</span><span class="news-time"><i class="ti ti-clock"></i> ${n.time}</span></div></div>`).join('');
 }
-function setTrendFilter(btn, f) { document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active')); btn.classList.add('active'); trendFilter = f; renderTrend(); }
+function setTrendFilter(btn, f) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  trendFilter = f;
+  renderTrend();
+}
 function filterTrend(v) { trendSearch = v; renderTrend(); }
 
+// ── DASHBOARD ──
 function renderDashboard() {
   const total = history.length;
   const pos = history.filter(h => h.sentiment === 'pos').length;
@@ -599,21 +627,37 @@ function renderDashboard() {
   document.getElementById('d-pos').textContent = pos;
   document.getElementById('d-neg').textContent = neg;
   document.getElementById('d-neu').textContent = neu;
-  
+
   if (donutChart) donutChart.destroy();
   const ctx = document.getElementById('donutChart').getContext('2d');
   donutChart = new Chart(ctx, {
     type: 'doughnut',
-    data: { labels: ['Positif','Negatif','Netral'], datasets: [{ data: [pos||1, neg||1, neu||1], backgroundColor: ['#34d399','#f87171','#94a3b8'], borderWidth: 0 }] },
+    data: {
+      labels: ['Positif','Negatif','Netral'],
+      datasets: [{ data: [pos||1, neg||1, neu||1], backgroundColor: ['#34d399','#f87171','#94a3b8'], borderWidth: 0 }]
+    },
     options: { responsive: true, maintainAspectRatio: true, cutout: '70%', plugins: { legend: { display: false } } }
   });
 
   document.getElementById('quest-grid').innerHTML = questData.map(q => `<div class="quest-card"><div class="quest-icon todo"><i class="ti ${q.icon}"></i></div><div><div class="quest-name">${q.name}</div><div class="quest-desc">${q.desc}</div></div></div>`).join('');
 }
 
-function recentItemHTML(h) { return `<div class="recent-item"><div class="recent-ticker">${h.ticker}</div><div class="recent-name">${h.name}</div>${badgeHTML(h.sentiment)}<div class="recent-score">${Math.round(h.score*100)}%</div></div>`; }
-function renderHistoryPage() { document.getElementById('history-list').innerHTML = history.length ? history.map(h => recentItemHTML(h)).join('') : `<div class="empty-state"><p>Belum ada riwayat</p></div>`; }
-function filterHistory(v) { const q = v.toLowerCase(); const items = history.filter(h => h.name.toLowerCase().includes(q)); document.getElementById('history-list').innerHTML = items.length ? items.map(h => recentItemHTML(h)).join('') : `<div class="empty-state"><p>Tidak ditemukan</p></div>`; }
+// ── HISTORY ──
+function recentItemHTML(h) {
+  return `<div class="recent-item"><div class="recent-ticker">${h.ticker}</div><div class="recent-name">${h.name}</div>${badgeHTML(h.sentiment)}<div class="recent-score">${Math.round(h.score*100)}%</div></div>`;
+}
+function renderHistoryPage() {
+  document.getElementById('history-list').innerHTML = history.length
+    ? history.map(h => recentItemHTML(h)).join('')
+    : `<div class="empty-state"><p>Belum ada riwayat</p></div>`;
+}
+function filterHistory(v) {
+  const q = v.toLowerCase();
+  const items = history.filter(h => h.name.toLowerCase().includes(q));
+  document.getElementById('history-list').innerHTML = items.length
+    ? items.map(h => recentItemHTML(h)).join('')
+    : `<div class="empty-state"><p>Tidak ditemukan</p></div>`;
+}
 </script>
 </body>
 </html>
