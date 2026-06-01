@@ -332,7 +332,6 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       <i id="theme-icon" class="ti ti-sun"></i>
     </button>
 
-    <!-- ══ LANDING PAGE ══ -->
     <div id="page-landing" class="page active">
       <div class="landing-container">
         <div class="landing-emoji">🤖</div>
@@ -367,7 +366,6 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       </div>
     </div>
 
-    <!-- ══ ANALISIS PAGE ══ -->
     <div id="page-analisis" class="page">
       <div class="page-header">
         <h2>Analisis Sentimen Berita</h2>
@@ -385,7 +383,6 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       <div id="text-result-panel" style="display:none;margin-top:16px"></div>
     </div>
 
-    <!-- ══ TREND PAGE ══ -->
     <div id="page-trend" class="page">
       <div class="page-header">
         <h2>Tren Pasar</h2>
@@ -404,7 +401,6 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       <div id="trend-list" class="news-list"></div>
     </div>
 
-    <!-- ══ DASHBOARD PAGE ══ -->
     <div id="page-dashboard" class="page">
       <div class="page-header">
         <h2>Dashboard</h2>
@@ -432,7 +428,6 @@ h1,h2,h3,h4{font-family:'Syne',sans-serif}
       </div>
     </div>
 
-    <!-- ══ HISTORY PAGE ══ -->
     <div id="page-history" class="page">
       <div class="page-header">
         <h2>Riwayat</h2>
@@ -564,23 +559,30 @@ async function analyzeFreeText() {
     const csrfMeta = document.querySelector('meta[name="csrf-token"]');
     const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
-    const response = await axios.post('/api/v1/analyze', { 
-        judul: 'Analisis Teks Bebas', 
-        konten_berita: txt 
+    // MENGARAHKAN KE ENDPOINT RAILWAY DENGAN FORMAT Pydantic (teks_berita)
+    const response = await axios.post('https://sentimen-news-production.up.railway.app/predict', { 
+        teks_berita: txt 
     }, {
         headers: {
             'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
         }
     });
 
     const json = response.data;
-    const { sentimen, akurasi } = json.data;
+    
+    // MENYESUAIKAN VARIABEL RESPONSE DENGAN FASTAPI PYTHON
+    const sentimenText = json.sentimen;
+    const akurasi = json.confidence_score;
+
     let s = 'neu';
-    if (sentimen.toLowerCase() === 'positif') s = 'pos';
-    else if (sentimen.toLowerCase() === 'negatif') s = 'neg';
+    if (sentimenText.toLowerCase() === 'positif') s = 'pos';
+    else if (sentimenText.toLowerCase() === 'negatif') s = 'neg';
+    
     const score = Number(akurasi) / 100;
     const snippet = txt.length > 40 ? txt.substring(0, 40) + '...' : txt;
+    
     history.unshift({ticker: 'BERITA', name: snippet, sentiment: s, score: score, time: 'Baru saja'});
     if (s === 'neg') negCount++;
 
@@ -591,8 +593,14 @@ async function analyzeFreeText() {
 
     res.innerHTML = `<div class="result-panel"><div class="result-header"><div class="result-ticker" style="font-size:15px">Hasil SentimenAI Model</div>${badgeHTML(s)}</div><div class="result-score-row" style="margin-top:12px"><span style="font-size:12px;color:var(--muted);width:100px;flex-shrink:0">Confidence Score</span>${scoreBarHTML(score, s)}<span style="font-size:13px;font-weight:500;color:${sentColor(s)};width:40px;text-align:right">${akurasi}%</span></div>${saranHtml}</div>`;
     res.style.display = 'block';
+    
   } catch (err) {
-    res.innerHTML = `<div class="alert-box neg" style="margin-top:16px"><div class="alert-icon">⚠️</div><div style="flex:1"><div class="alert-title-neg">Gagal Menghubungi Server AI</div><div class="alert-body">Pastikan backend Anda menyala. ${err.message}</div></div></div>`;
+    let errorMsg = err.message;
+    if (err.response && err.response.data && err.response.data.detail) {
+        errorMsg = JSON.stringify(err.response.data.detail);
+    }
+    
+    res.innerHTML = `<div class="alert-box neg" style="margin-top:16px"><div class="alert-icon">⚠️</div><div style="flex:1"><div class="alert-title-neg">Gagal Menghubungi Server AI</div><div class="alert-body">Pastikan backend Anda menyala. Detail: ${errorMsg}</div></div></div>`;
     res.style.display = 'block';
   } finally {
     btn.innerHTML = `<i class="ti ti-scan"></i> Analisis Sentimen Konten`;
